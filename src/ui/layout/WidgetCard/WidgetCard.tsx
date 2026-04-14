@@ -31,22 +31,25 @@ export function WidgetCard({
       title={title}
       extra={extra}
       style={{
-        border: "1px solid var(--color-border)",
+        background:   "var(--color-surface-white)",
+        border:       "1px solid var(--color-border)",
         borderRadius: "var(--radius-md)",
-        boxShadow: "none",
+        boxShadow:    "none",
         ...style,
       }}
       styles={{
         body: {
-          padding: "var(--spacing-4)",
+          background: "var(--color-surface-white)",
+          padding:    "var(--spacing-4)",
           ...bodyStyle,
         },
         header: {
+          background:   "var(--color-surface-white)",
           borderBottom: "1px solid var(--color-border)",
-          padding: "8px 16px",
-          minHeight: 40,
-          fontSize: "var(--font-size-sm)",
-          fontWeight: "var(--font-weight-semibold)",
+          padding:      "8px 16px",
+          minHeight:    40,
+          fontSize:     "var(--font-size-sm)",
+          fontWeight:   "var(--font-weight-semibold)",
         },
       }}
     >
