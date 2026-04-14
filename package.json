@@ -1,0 +1,57 @@
+{
+  "name": "dash-claude",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "lint": "biome lint ./src",
+    "format": "biome format --write .",
+    "build:tokens": "tsx src/tokens/build-tokens.ts"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.5.2",
+    "@tailwindcss/vite": "^4.2.2",
+    "@tanstack/react-query": "^5.62.16",
+    "@tanstack/react-router": "^1.95.4",
+    "antd": "^5.22.7",
+    "dayjs": "^1.11.13",
+    "decimal.js": "^10.4.3",
+    "msw": "^2.7.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.0",
+    "tailwindcss": "^4.2.2",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@tanstack/router-devtools": "^1.95.4",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild", "msw"]
+  }
+}

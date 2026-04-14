@@ -1,0 +1,12 @@
+node_modules
+dist
+.turbo
+coverage
+generated
+*.local
+.env
+.env.*
+!.env.example
+.claude
+CLAUDE.MD
+SCRATCHPAD.MD
