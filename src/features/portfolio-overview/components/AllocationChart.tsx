@@ -72,8 +72,8 @@ export function AllocationChart() {
         <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="portfolioGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
+              <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.15} />
+              <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0.02} />
             </linearGradient>
           </defs>
 
@@ -105,11 +105,11 @@ export function AllocationChart() {
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#3b82f6"
+            stroke="var(--color-accent)"
             strokeWidth={2}
             fill="url(#portfolioGradient)"
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 0, fill: "#3b82f6" }}
+            activeDot={{ r: 4, strokeWidth: 0, fill: "var(--color-accent)" }}
           />
         </AreaChart>
       </ResponsiveContainer>

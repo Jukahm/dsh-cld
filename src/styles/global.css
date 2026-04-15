@@ -1,76 +1,9 @@
 @import "../tokens/generated/tokens.css";
 @import "tailwindcss";
 
-/* ── Sidebar tokens (light mode defaults) ────────────────────────────────────
-   The sidebar has its own independent background — white in light mode,
-   charcoal in dark mode. These vars are used directly in SideNav.
-   ─────────────────────────────────────────────────────────────────────────── */
-:root {
-  --sidebar-bg:              #ffffff;
-  --sidebar-border:          #E2E8F0;
-  --sidebar-text-primary:    #111827;
-  --sidebar-text-secondary:  #64748B;
-  --sidebar-divider:         #E2E8F0;
-  --sidebar-toggle-color:    #94A3B8;
-  --sidebar-toggle-hover:    #374151;
-}
-
-/* ── Dark mode token overrides ───────────────────────────────────────────────
-   Set on <html data-theme="dark"> by ThemeProvider.toggle().
-   Surfaces, text and borders flip. Sidebar gets its own dark palette.
-   Primary (green) and semantic colors stay the same across themes.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* Dark mode scrollbar hint */
 [data-theme="dark"] {
-  /* Surfaces — slate dark scale (page bg + card bg are noticeably different) */
-  --color-surface-white:    #1E293B;
-  --color-surface-gray-50:  #0F172A;
-  --color-surface-gray-100: #1E293B;
-  --color-surface-gray-200: #334155;
-  --color-surface-gray-300: #475569;
-  --color-surface-gray-400: #64748B;
-  --color-surface-gray-500: #94A3B8;
-  --color-surface-gray-600: #CBD5E1;
-  --color-surface-gray-700: #E2E8F0;
-  --color-surface-gray-800: #F1F5F9;
-  --color-surface-gray-900: #F8FAFC;
-
-  /* Text */
-  --color-text-primary:   #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-tertiary:  #64748B;
-  --color-text-inverse:   #0F172A;
-
-  /* Borders */
-  --color-border:        #334155;
-  --color-border-strong: #475569;
-
-  /* Sidebar — charcoal, distinct from page bg (#0F172A) and cards (#1E293B) */
-  --sidebar-bg:             #1A2333;
-  --sidebar-border:         #2D3B52;
-  --sidebar-text-primary:   #F8FAFC;
-  --sidebar-text-secondary: #94A3B8;
-  --sidebar-divider:        #2D3B52;
-  --sidebar-toggle-color:   #64748B;
-  --sidebar-toggle-hover:   #94A3B8;
-
-  /* Primary (green) / accent (blue) / success / danger / warning stay the same */
-
-  /* Scrollbar */
   color-scheme: dark;
-}
-
-/* Antd popup portals (Dropdown, Popover, Tooltip) mount on <body> */
-body[data-theme="dark"] .ant-dropdown,
-body[data-theme="dark"] .ant-popover,
-body[data-theme="dark"] .ant-tooltip {
-  --color-surface-white:    #1E293B;
-  --color-surface-gray-50:  #0F172A;
-  --color-surface-gray-100: #1E293B;
-  --color-text-primary:     #F8FAFC;
-  --color-text-secondary:   #94A3B8;
-  --color-text-tertiary:    #64748B;
-  --color-border:           #334155;
-  --color-border-strong:    #475569;
 }
 
 /* Body background reacts to token swap */

@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 import { ConfigProvider, App, theme as antdThemeAPI } from "antd";
-import { antdTheme } from "@/tokens";
+import { antdTheme, antdDarkOverrides } from "@/tokens";
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
@@ -40,40 +40,17 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const configTheme = {
     ...antdTheme,
     algorithm: isDark ? antdThemeAPI.darkAlgorithm : antdThemeAPI.defaultAlgorithm,
-    token: {
-      ...antdTheme.token,
-      colorBgBase:          isDark ? "#1E293B" : "#ffffff",
-      colorTextBase:        isDark ? "#F8FAFC" : "#0F172A",
-      colorBorder:          isDark ? "#334155" : "#E2E8F0",
-      colorBorderSecondary: isDark ? "#475569" : "#CBD5E1",
-    },
-    components: {
-      ...antdTheme.components,
-      Table: {
-        ...antdTheme.components.Table,
-        headerBg:           isDark ? "#1E293B" : "#F8FAFC",
-        headerColor:        isDark ? "#94A3B8" : "#64748B",
-        headerSortActiveBg: isDark ? "#334155" : "#F1F5F9",
-        rowHoverBg:         isDark ? "#334155" : "#F8FAFC",
-        borderColor:        isDark ? "#334155" : "#E2E8F0",
-      },
-      Layout: {
-        ...antdTheme.components.Layout,
-        // Page background: darkest — #0F172A so cards (#1E293B) pop against it
-        bodyBg:   isDark ? "#0F172A" : "#F8FAFC",
-        // Sidebar has its own bg via CSS var — this only affects Antd Layout header
-        headerBg: isDark ? "#1E293B" : "#ffffff",
-        siderBg:  isDark ? "#1A2333" : "#ffffff",
-      },
-      Menu: {
-        ...antdTheme.components.Menu,
-        // In dark mode override the dark item tokens for the sidebar menu
-        darkItemBg:            isDark ? "#1A2333"                    : antdTheme.components.Menu.darkItemBg,
-        darkItemHoverBg:       isDark ? "rgba(34, 197, 94, 0.12)"    : antdTheme.components.Menu.darkItemHoverBg,
-        darkItemSelectedBg:    isDark ? "rgba(22, 163, 74, 0.22)"    : antdTheme.components.Menu.darkItemSelectedBg,
-        darkItemSelectedColor: isDark ? "#4ADE80"                    : antdTheme.components.Menu.darkItemSelectedColor,
-      },
-    },
+    token: isDark
+      ? { ...antdTheme.token, ...antdDarkOverrides.token }
+      : antdTheme.token,
+    components: isDark
+      ? {
+          ...antdTheme.components,
+          Table:  { ...antdTheme.components.Table,  ...antdDarkOverrides.components.Table  },
+          Layout: { ...antdTheme.components.Layout, ...antdDarkOverrides.components.Layout },
+          Menu:   { ...antdTheme.components.Menu,   ...antdDarkOverrides.components.Menu   },
+        }
+      : antdTheme.components,
   };
 
   return (
