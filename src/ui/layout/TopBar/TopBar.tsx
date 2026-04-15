@@ -12,7 +12,7 @@ import {
   CheckOutlined,
   MenuOutlined,
 } from "@ant-design/icons";
-import type { UserProfile } from "../../navigation/SideNav/SideNav.js";
+import type { UserProfile } from "../../navigation/SideNav/types.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

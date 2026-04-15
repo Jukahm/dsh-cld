@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { createRootRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  Outlet,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import {
   AppShell,
   SideNav,
@@ -21,8 +26,18 @@ const navSections: NavSection[] = [
     key: "main",
     items: [
       { key: "/", label: "Dashboard", icon: <DashboardOutlined /> },
-      { key: "/new-issuance", label: "New Issuance", icon: <FileAddOutlined />, disabled: true },
-      { key: "/alpha", label: "Alpha", icon: <LineChartOutlined />, disabled: true },
+      {
+        key: "/new-issuance",
+        label: "New Issuance",
+        icon: <FileAddOutlined />,
+        disabled: true,
+      },
+      {
+        key: "/alpha",
+        label: "Alpha",
+        icon: <LineChartOutlined />,
+        disabled: true,
+      },
     ],
   },
   {
@@ -30,9 +45,24 @@ const navSections: NavSection[] = [
     label: "Support",
     bottom: true,
     items: [
-      { key: "/notifications", label: "Notifications", icon: <BellOutlined />, disabled: true },
-      { key: "/settings", label: "Settings", icon: <SettingOutlined />, disabled: true },
-      { key: "/help", label: "Help", icon: <QuestionCircleOutlined />, disabled: true },
+      {
+        key: "/notifications",
+        label: "Notifications",
+        icon: <BellOutlined />,
+        disabled: true,
+      },
+      {
+        key: "/settings",
+        label: "Settings",
+        icon: <SettingOutlined />,
+        disabled: true,
+      },
+      {
+        key: "/help",
+        label: "Help",
+        icon: <QuestionCircleOutlined />,
+        disabled: true,
+      },
     ],
   },
 ];
@@ -70,7 +100,8 @@ const USER = {
 function RootLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [notifications, setNotifications] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] =
+    useState<AppNotification[]>(MOCK_NOTIFICATIONS);
   const { isDark, toggle: toggleDark } = useTheme();
 
   const isDesktop = useMediaQuery(breakpoints.lg);
@@ -98,7 +129,7 @@ function RootLayout() {
       collapsed={isMobile ? false : collapsed}
       onCollapseToggle={() => setCollapsed((c) => !c)}
       logoIcon={<BankOutlined />}
-      logoLabel="Primary Portal"
+      logoLabel="PRIMARY PORTAL"
       user={USER}
       inDrawer={isMobile}
     />
@@ -110,7 +141,8 @@ function RootLayout() {
         isDark,
         onToggleDark: toggleDark,
         notifications,
-        onMarkAllRead: () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))),
+        onMarkAllRead: () =>
+          setNotifications((prev) => prev.map((n) => ({ ...n, read: true }))),
         user: USER,
         isMobile,
         onOpenMobileNav: () => setMobileNavOpen(true),
