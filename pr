@@ -1,0 +1,135 @@
+Step 1 — Establish the three-panel shell
+Replace the current 2-col layout with a fixed frame that never scrolls as a whole. The panels scroll independently.
+
+
+┌─────────────┬──────────────────────────┬─────────────────────┐
+│  LEFT        │  CENTER                  │  RIGHT (drawer)     │
+│  240px fixed │  flex-1, min-w-0         │  360px, slide-in    │
+│  overflow-y  │  overflow-y              │  overflow-y         │
+│  auto        │  auto                    │  auto               │
+└─────────────┴──────────────────────────┴─────────────────────┘
+The outer container is height: 100vh (or the main content area height), display: flex, overflow: hidden. Nothing scrolls globally. Each panel manages its own scroll.
+
+The right drawer starts at width: 0 / opacity: 0 and transitions to width: 360px when a set is activated. Use CSS transform: translateX not width animation for performance.
+
+Step 2 — Build the Left Navigator
+This replaces the current right-panel comp sets list. It's compact and persistent.
+
+Structure:
+
+
+Comp Sets                    [+ NEW]
+─────────────────────────────────
+  EJB                   17 ●  ←  active (highlighted)
+  Juliano IBRD           9
+  SSA Comps             12
+  E2E-DCM-IBRD           6
+─────────────────────────────────
+Key decisions:
+
+Click a set → activates it + opens the right drawer
+Active row gets a left border accent + subtle background
+Badge = instrument count, updates live when you add/remove
+No inline expansion — the list never grows
++ NEW is at the top right of the panel header, not floating at the top of the page
+DELETE moves to the right drawer (detail view), out of the list — reduces accidental deletes
+Step 3 — Refactor the Center Panel
+The center panel owns search + instrument grid. It gets the full remaining width.
+
+Top controls bar:
+
+
+Search by:  [Issuer ____________]  [Paste ISINs]
+Rename ISINS button → Paste ISINs (or Bulk ISIN Search)
+Remove the "Add instrument(s) to comp sets" dropdown from here entirely — it moves to the tray (Step 5)
+The controls bar is position: sticky; top: 0 so it stays visible when the grid scrolls
+The AgGrid:
+
+Takes remaining height of the center panel
+Row selection via checkbox column (leftmost) + shift-click range
+When 0 rows selected → tray is hidden
+When ≥1 row selected → tray appears (Step 5)
+Step 4 — Build the Right Drawer (Active Set Detail)
+This replaces the current inline comp set expansion that destroys context.
+
+Content:
+
+
+✕  EJB                          [Rename]  [Delete]
+─────────────────────────────────────────────────
+17 instruments
+
+  Currency  ISIN          Security Name    Bond Type
+  ──────────────────────────────────────────────────
+  CHF (9)  ▼
+    CHF    CH0025896942   EIB 3 1/8 06/30/36  Reg S
+    ...
+  EUR (8)  ▼
+    EUR    DE000A0E83A8   KFW 2.38 09/24/30   Global
+    ...
+
+  [Remove selected from set]
+Key decisions:
+
+✕ closes the drawer but keeps the set active in the navigator (badge stays highlighted)
+Rename is inline click-to-edit on the name, not a separate modal
+Delete triggers a confirmation inline within the drawer, not a toast or modal
+Instruments can be removed from the set here (checkbox + action button)
+The grid in the drawer is independent from the search grid — separate selection state
+Step 5 — The Sticky Selection Tray
+This is the key UX unlock. It appears at the bottom of the center panel only when rows are selected in the search grid.
+
+
+┌────────────────────────────────────────────────────────┐
+│  ✓ 3 instruments selected    [×]                       │
+│  Add to:  [EJB ×]  [SSA Comps ×]  [+ Select set ▾]   │
+│                                         [ADD TO SETS]  │
+└────────────────────────────────────────────────────────┘
+Behavior:
+
+Slides up from bottom when selectedRows.length > 0
+Slides back down when selection is cleared (ESC or clicking ×)
+"Add to" chips are the target comp sets — pre-populated with the currently active set
++ Select set opens a small popover with the comp set list (not a full dropdown)
+ADD TO SETS is disabled until ≥1 set is chosen
+After adding: tray shows a success state for ~2s then clears selection
+This is the fix for the "invisible add flow." The action is now anchored to the selection, not floating disconnected above the grid.
+
+Step 6 — Persistent Context Indicator
+Add a subtle context banner at the top of the center panel, below the search controls:
+
+
+Currently viewing:  EJB  (17 instruments)    [Open set ↗]
+Visible only when a set is active
+Open set reopens the right drawer if it was closed
+This gives new users an answer to "wait, what set am I adding to right now?"
+Step 7 — Interaction flow for the "add" task (before vs after)
+Before (current):
+
+Search left
+Shift-select rows in grid (left, unclear affordance)
+Find dropdown above grid (left, disconnected)
+Select comp set in dropdown
+Click ADD TO COMP SETS button
+Switch eyes right to verify it appeared
+After (hybrid):
+
+Search center
+Check rows (checkbox column, clear affordance)
+Tray appears at bottom automatically
+Target sets already pre-filled with active set — confirm or adjust
+Click ADD
+Badge count in left navigator increments — verified without eye movement
+Step 8 — Responsive / collapsed behavior
+At narrower viewports (1280px and below):
+
+Left navigator collapses to icon-only strip (just set initials + badge count)
+Tooltip on hover shows full name
+Right drawer becomes a bottom sheet on mobile (if applicable)
+Implementation order
+#	Task	Why first
+1	Three-panel shell + left navigator	Everything depends on this frame
+2	Right drawer component	Unblocks removing inline expansion
+3	Sticky tray	Unblocks removing the old add-flow controls
+4	Context indicator banner	Small, high-value for new users
+5	Rename inline editing	Last because it's pure detail polish
