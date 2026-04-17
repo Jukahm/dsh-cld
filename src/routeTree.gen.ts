@@ -3,5 +3,6 @@
 import { Route as rootRoute } from "./routes/__root.js";
 import { Route as indexRoute } from "./routes/index.js";
 import { Route as portfolioRoute } from "./routes/portfolio/index.js";
+import { Route as comparablesRoute } from "./routes/comparables/index.js";
 
-export const routeTree = rootRoute.addChildren([indexRoute, portfolioRoute]);
+export const routeTree = rootRoute.addChildren([indexRoute, portfolioRoute, comparablesRoute]);

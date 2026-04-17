@@ -14,6 +14,7 @@ import {
   DashboardOutlined,
   FileAddOutlined,
   LineChartOutlined,
+  FundOutlined,
   BellOutlined,
   SettingOutlined,
   QuestionCircleOutlined,
@@ -26,6 +27,7 @@ const navSections: NavSection[] = [
     key: "main",
     items: [
       { key: "/", label: "Dashboard", icon: <DashboardOutlined /> },
+      { key: "/comparables", label: "Comparables", icon: <FundOutlined /> },
       {
         key: "/new-issuance",
         label: "New Issuance",
