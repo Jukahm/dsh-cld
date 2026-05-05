@@ -2,12 +2,14 @@ import { useState, useMemo, useRef, useCallback } from "react";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, GetRowIdParams } from "ag-grid-community";
 import type { ICellRendererParams } from "ag-grid-community";
-import { Checkbox, Input } from "antd";
+import { Checkbox, Input, Tabs } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useComparablesStore } from "../store/comparables.store.js";
 import type { Instrument } from "../types/index.js";
 import { CheckboxColHeader } from "./CheckboxColHeader.js";
 import type { CheckboxHeaderParams } from "./CheckboxColHeader.js";
+
+const CURRENCY_ORDER = ["EUR", "USD", "CHF", "GBP"];
 
 type MatrixRow = Instrument & {
   fairValue: number;
@@ -116,15 +118,33 @@ export function InstrumentMatrix() {
   const gridRef = useRef<AgGridReact<MatrixRow>>(null);
   const [isinFilter, setIsinFilter] = useState("");
   const [issuerFilter, setIssuerFilter] = useState("");
+  const [selectedCurrency, setSelectedCurrency] = useState("EUR");
 
   // Filter state in a ref so AG Grid's external filter reads latest value without re-renders
   const filterRef = useRef({ isin: "", issuer: "" });
 
-  // Flatten all instruments, deduplicated by ISIN. Checkbox state starts in data.
+  // Stats per currency for tab labels (instrument count + relevant comp set count)
+  const currencyStats = useMemo(() => {
+    const instrSets: Record<string, Set<string>> = {};
+    const csSets: Record<string, Set<string>> = {};
+    for (const cs of compSets) {
+      for (const instr of cs.instruments) {
+        const ccy = instr.currency;
+        (instrSets[ccy] ??= new Set()).add(instr.isin);
+        (csSets[ccy] ??= new Set()).add(cs.id);
+      }
+    }
+    return CURRENCY_ORDER
+      .filter((c) => instrSets[c])
+      .map((c) => ({ currency: c, instruments: instrSets[c]!.size, compSets: csSets[c]!.size }));
+  }, [compSets]);
+
+  // Flatten instruments for the selected currency only. Checkbox state starts in data.
   const rowData = useMemo<MatrixRow[]>(() => {
     const seen = new Map<string, MatrixRow>();
     for (const cs of compSets) {
       for (const instr of cs.instruments) {
+        if (instr.currency !== selectedCurrency) continue;
         if (!seen.has(instr.isin)) {
           seen.set(instr.isin, {
             ...instr,
@@ -137,7 +157,7 @@ export function InstrumentMatrix() {
       }
     }
     return Array.from(seen.values());
-  }, [compSets]);
+  }, [compSets, selectedCurrency]);
 
   // Flip one cell's boolean field via a targeted transaction
   const toggleCell = useCallback((isin: string, field: string) => {
@@ -160,7 +180,13 @@ export function InstrumentMatrix() {
     if (updates.length) api.applyTransaction({ update: updates });
   }, []);
 
-  // Dynamic scrollable columns: Fair Value + one per comp set
+  // Only comp sets that contain at least one instrument in the selected currency
+  const visibleCompSets = useMemo(
+    () => compSets.filter((cs) => cs.instruments.some((i) => i.currency === selectedCurrency)),
+    [compSets, selectedCurrency],
+  );
+
+  // Dynamic scrollable columns: Fair Value + one per relevant comp set
   const scrollableCols = useMemo<ColDef<MatrixRow>[]>(() => {
     const fvParams: CheckboxHeaderParams = { membershipField: "fairValueChecked", onToggleAll: toggleAll };
     const cols: ColDef<MatrixRow>[] = [{
@@ -174,7 +200,7 @@ export function InstrumentMatrix() {
       sortable: false,
     }];
 
-    for (const cs of compSets) {
+    for (const cs of visibleCompSets) {
       const field = `cs_${cs.id}`;
       const csParams: CheckboxHeaderParams = { membershipField: field, onToggleAll: toggleAll };
       cols.push({
@@ -189,7 +215,7 @@ export function InstrumentMatrix() {
       });
     }
     return cols;
-  }, [compSets, toggleCell, toggleAll]);
+  }, [visibleCompSets, toggleCell, toggleAll]);
 
   const colDefs = useMemo<ColDef<MatrixRow>[]>(
     () => [...PINNED_COLS, ...scrollableCols],
@@ -211,6 +237,18 @@ export function InstrumentMatrix() {
     );
   }, []);
 
+  function clearTextFilters() {
+    setIsinFilter("");
+    setIssuerFilter("");
+    filterRef.current = { isin: "", issuer: "" };
+    gridRef.current?.api?.onFilterChanged();
+  }
+
+  function onCurrencyChange(ccy: string) {
+    setSelectedCurrency(ccy);
+    clearTextFilters();
+  }
+
   function onIsinChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
     setIsinFilter(val);
@@ -225,10 +263,36 @@ export function InstrumentMatrix() {
     gridRef.current?.api?.onFilterChanged();
   }
 
+  const tabItems = currencyStats.map(({ currency, instruments, compSets: csCount }) => ({
+    key: currency,
+    label: (
+      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ fontWeight: 700, color: CURRENCY_COLORS[currency] ?? "inherit" }}>
+          {currency}
+        </span>
+        <span style={{ fontSize: 11, color: "var(--color-text-tertiary)", fontWeight: 400 }}>
+          {instruments} · {csCount}cs
+        </span>
+      </span>
+    ),
+  }));
+
+  const currentStats = currencyStats.find((s) => s.currency === selectedCurrency);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Currency tabs */}
+      <Tabs
+        activeKey={selectedCurrency}
+        items={tabItems}
+        onChange={onCurrencyChange}
+        size="small"
+        style={{ flexShrink: 0 }}
+        tabBarStyle={{ marginBottom: 0, borderBottom: "1px solid var(--color-border)" }}
+      />
+
       {/* Filter bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0 10px", flexShrink: 0, borderBottom: "1px solid var(--color-border)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0 8px", flexShrink: 0, borderBottom: "1px solid var(--color-border)" }}>
         <Input
           prefix={<SearchOutlined style={{ color: "var(--color-text-tertiary)" }} />}
           placeholder="Filter by ISIN…"
@@ -249,7 +313,7 @@ export function InstrumentMatrix() {
         />
         <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-tertiary)", marginLeft: "auto" }}>
           {rowData.length} instrument{rowData.length !== 1 ? "s" : ""}
-          {compSets.length > 0 && ` · ${compSets.length} comp set${compSets.length !== 1 ? "s" : ""}`}
+          {currentStats && ` · ${currentStats.compSets} comp set${currentStats.compSets !== 1 ? "s" : ""}`}
         </span>
       </div>
 
