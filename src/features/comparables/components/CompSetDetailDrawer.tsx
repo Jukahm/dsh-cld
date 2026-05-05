@@ -1,7 +1,11 @@
-import { useState } from "react";
-import { Button, Input, Table, Tag, Popconfirm } from "antd";
+import { useState, useRef, useCallback } from "react";
+import { AgGridReact } from "ag-grid-react";
+import type { ColDef, SelectionChangedEvent } from "ag-grid-community";
+import type { ICellRendererParams } from "ag-grid-community";
+import { Button, Input, Popconfirm } from "antd";
 import { CloseOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import type { CompSet, Instrument } from "../types/index.js";
+import { useComparablesStore } from "../store/comparables.store.js";
 
 type Props = {
   detail: CompSet;
@@ -9,6 +13,7 @@ type Props = {
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
   onRemoveInstruments: (setId: string, isins: string[]) => void;
+  onDropInstrument: (instrument: Instrument) => void;
 };
 
 const CURRENCY_COLORS: Record<string, string> = {
@@ -18,10 +23,95 @@ const CURRENCY_COLORS: Record<string, string> = {
   GBP: "#7c3aed",
 };
 
-export function CompSetDetailDrawer({ detail, onClose, onRename, onDelete, onRemoveInstruments }: Props) {
+function CurrencyCell({ value }: ICellRendererParams<Instrument>) {
+  const color = CURRENCY_COLORS[value as string] ?? "var(--color-text-secondary)";
+  return <span style={{ color, fontWeight: 600 }}>{value as string}</span>;
+}
+
+function BondTypeCell({ value }: ICellRendererParams<Instrument>) {
+  const isGlobal = value === "Global";
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        padding: "1px 5px",
+        borderRadius: 3,
+        background: isGlobal ? "#EFF6FF" : "#F1F5F9",
+        color: isGlobal ? "#1D4ED8" : "#475569",
+        border: `1px solid ${isGlobal ? "#BFDBFE" : "#CBD5E1"}`,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {value as string}
+    </span>
+  );
+}
+
+const COLUMN_DEFS: ColDef<Instrument>[] = [
+  {
+    headerName: "CCY",
+    field: "currency",
+    width: 60,
+    cellRenderer: CurrencyCell,
+    sortable: true,
+  },
+  {
+    headerName: "ISIN",
+    field: "isin",
+    width: 130,
+    cellStyle: { fontFamily: "monospace" } as Record<string, string>,
+  },
+  {
+    headerName: "Security",
+    field: "securityName",
+    flex: 1,
+    minWidth: 100,
+  },
+  {
+    headerName: "Type",
+    field: "bondType",
+    width: 72,
+    cellRenderer: BondTypeCell,
+  },
+];
+
+const GRID_STYLE = {
+  "--ag-font-size": "12px",
+  "--ag-row-height": "32px",
+  "--ag-header-height": "34px",
+  "--ag-foreground-color": "#0F172A",
+  "--ag-header-background-color": "#F8FAFC",
+  "--ag-header-foreground-color": "#64748B",
+  "--ag-header-font-weight": "600",
+  "--ag-border-color": "#E2E8F0",
+  "--ag-row-border-color": "#E2E8F0",
+  "--ag-selected-row-background-color": "#EFF6FF",
+  "--ag-background-color": "#FFFFFF",
+  "--ag-odd-row-background-color": "#FFFFFF",
+  "--ag-accent-color": "#3B82F6",
+  "--ag-cell-horizontal-padding": "8px",
+  "--ag-wrapper-border-radius": "0px",
+  height: "100%",
+} as React.CSSProperties;
+
+export function CompSetDetailDrawer({
+  detail,
+  onClose,
+  onRename,
+  onDelete,
+  onRemoveInstruments,
+  onDropInstrument,
+}: Props) {
+  const gridRef = useRef<AgGridReact<Instrument>>(null);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(detail.name);
   const [selectedIsins, setSelectedIsins] = useState<string[]>([]);
+  const [isHovering, setIsHovering] = useState(false);
+
+  const draggingInstrument = useComparablesStore((s) => s.draggingInstrument);
+  const canDropHere =
+    !!draggingInstrument &&
+    !detail.instruments.some((i) => i.isin === draggingInstrument.isin);
 
   function saveRename() {
     if (nameValue.trim() && nameValue.trim() !== detail.name) {
@@ -35,46 +125,18 @@ export function CompSetDetailDrawer({ detail, onClose, onRename, onDelete, onRem
     setEditingName(false);
   }
 
-  const columns = [
-    {
-      title: "Currency",
-      dataIndex: "currency",
-      key: "currency",
-      width: 72,
-      render: (cur: string) => (
-        <span style={{ color: CURRENCY_COLORS[cur] ?? "var(--color-text-secondary)", fontWeight: 600, fontSize: "var(--font-size-xs)" }}>
-          {cur}
-        </span>
-      ),
-    },
-    {
-      title: "ISIN",
-      dataIndex: "isin",
-      key: "isin",
-      width: 130,
-      render: (v: string) => (
-        <span style={{ fontFamily: "monospace", fontSize: "var(--font-size-xs)" }}>{v}</span>
-      ),
-    },
-    {
-      title: "Security",
-      dataIndex: "securityName",
-      key: "securityName",
-      ellipsis: true,
-      render: (v: string) => (
-        <span style={{ fontSize: "var(--font-size-xs)" }}>{v}</span>
-      ),
-    },
-    {
-      title: "Type",
-      dataIndex: "bondType",
-      key: "bondType",
-      width: 60,
-      render: (v: string) => (
-        <Tag color={v === "Global" ? "blue" : "default"} style={{ fontSize: 10, padding: "0 4px", lineHeight: "16px" }}>{v}</Tag>
-      ),
-    },
-  ];
+  const onSelectionChanged = useCallback((e: SelectionChangedEvent<Instrument>) => {
+    setSelectedIsins(e.api.getSelectedRows().map((r) => r.isin));
+  }, []);
+
+  function handleRemove() {
+    onRemoveInstruments(detail.id, selectedIsins);
+    setSelectedIsins([]);
+    gridRef.current?.api?.deselectAll();
+  }
+
+  const isDropActive = isHovering && canDropHere;
+  const isAlreadyInSet = isHovering && !canDropHere;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -96,7 +158,16 @@ export function CompSetDetailDrawer({ detail, onClose, onRename, onDelete, onRem
             <span
               onClick={() => setEditingName(true)}
               title="Click to rename"
-              style={{ fontWeight: 600, fontSize: "var(--font-size-base)", color: "var(--color-text-primary)", cursor: "text", flex: 1, display: "flex", alignItems: "center", gap: 6 }}
+              style={{
+                fontWeight: 600,
+                fontSize: "var(--font-size-base)",
+                color: "var(--color-text-primary)",
+                cursor: "text",
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
             >
               {detail.name}
               <EditOutlined style={{ fontSize: 11, color: "var(--color-text-tertiary)", opacity: 0.6 }} />
@@ -130,22 +201,89 @@ export function CompSetDetailDrawer({ detail, onClose, onRename, onDelete, onRem
         </div>
       </div>
 
-      {/* Table */}
-      <div style={{ flex: 1, overflow: "auto" }}>
-        <Table<Instrument>
-          size="small"
-          columns={columns}
-          dataSource={detail.instruments}
-          rowKey="isin"
-          pagination={false}
-          sticky
-          rowSelection={{
-            selectedRowKeys: selectedIsins,
-            onChange: (keys) => setSelectedIsins(keys as string[]),
-          }}
-          locale={{ emptyText: "No instruments in this set yet." }}
-          style={{ "--ant-table-header-bg": "var(--color-surface-gray-50)" } as React.CSSProperties}
-        />
+      {/* Drop zone + Grid */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          position: "relative",
+          transition: "background 120ms",
+          background: isDropActive
+            ? "rgba(59,130,246,0.04)"
+            : isAlreadyInSet
+              ? "rgba(239,68,68,0.04)"
+              : undefined,
+        }}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          if (draggingInstrument) setIsHovering(true);
+        }}
+        onDragOver={(e) => {
+          e.preventDefault();
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsHovering(false);
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (draggingInstrument && canDropHere) {
+            onDropInstrument(draggingInstrument);
+          }
+          setIsHovering(false);
+        }}
+      >
+        {/* Drop overlay */}
+        {isHovering && draggingInstrument && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
+              border: `2px dashed ${isDropActive ? "#3B82F6" : "#EF4444"}`,
+              borderRadius: 4,
+              margin: 4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
+              background: isDropActive ? "rgba(59,130,246,0.06)" : "rgba(239,68,68,0.06)",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: isDropActive ? "#2563EB" : "#DC2626",
+                background: isDropActive ? "#EFF6FF" : "#FEF2F2",
+                padding: "4px 10px",
+                borderRadius: 4,
+              }}
+            >
+              {isDropActive ? "Drop to add" : "Already in set"}
+            </span>
+          </div>
+        )}
+
+        <div className="ag-theme-alpine" style={GRID_STYLE}>
+          <AgGridReact<Instrument>
+            ref={gridRef}
+            rowData={detail.instruments}
+            columnDefs={COLUMN_DEFS}
+            rowSelection="multiple"
+            rowMultiSelectWithClick
+            rowStyle={{ cursor: "pointer" }}
+            onSelectionChanged={onSelectionChanged}
+            animateRows
+            suppressCellFocus
+            noRowsOverlayComponent={() => (
+              <span style={{ fontSize: 13, color: "var(--color-text-tertiary)" }}>
+                No instruments in this set yet. Drag rows here to add.
+              </span>
+            )}
+          />
+        </div>
       </div>
 
       {/* Remove action bar */}
@@ -164,11 +302,7 @@ export function CompSetDetailDrawer({ detail, onClose, onRename, onDelete, onRem
           <span style={{ fontSize: "var(--font-size-xs)", color: "var(--color-text-secondary)" }}>
             {selectedIsins.length} selected
           </span>
-          <Button
-            size="small"
-            danger
-            onClick={() => { onRemoveInstruments(detail.id, selectedIsins); setSelectedIsins([]); }}
-          >
+          <Button size="small" danger onClick={handleRemove}>
             Remove from set
           </Button>
         </div>

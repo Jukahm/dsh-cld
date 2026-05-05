@@ -57,4 +57,5 @@ export {
   MinusOutlined,
   DownOutlined,
   UpOutlined,
+  TableOutlined,
 } from "@ant-design/icons";

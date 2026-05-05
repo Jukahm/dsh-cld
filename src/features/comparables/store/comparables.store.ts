@@ -7,12 +7,14 @@ type ComparablesState = {
   activeSetId: string | null;
   isDrawerOpen: boolean;
   selectedInstruments: Instrument[];
+  draggingInstrument: Instrument | null;
 
   setActiveSet: (id: string) => void;
   closeDrawer: () => void;
   openDrawer: () => void;
   setSelectedInstruments: (rows: Instrument[]) => void;
   clearSelection: () => void;
+  setDraggingInstrument: (i: Instrument | null) => void;
 
   createCompSet: (name: string) => void;
   deleteCompSet: (id: string) => void;
@@ -27,11 +29,14 @@ export const useComparablesStore = create<ComparablesState>((set) => ({
   isDrawerOpen: false,
   selectedInstruments: [],
 
+  draggingInstrument: null,
+
   setActiveSet: (id) => set({ activeSetId: id, isDrawerOpen: true }),
   closeDrawer: () => set({ isDrawerOpen: false }),
   openDrawer: () => set({ isDrawerOpen: true }),
   setSelectedInstruments: (rows) => set({ selectedInstruments: rows }),
   clearSelection: () => set({ selectedInstruments: [] }),
+  setDraggingInstrument: (i) => set({ draggingInstrument: i }),
 
   createCompSet: (name) =>
     set((s) => ({

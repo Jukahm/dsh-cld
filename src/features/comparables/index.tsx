@@ -8,15 +8,24 @@ import { InstrumentSearchControls } from "./components/InstrumentSearchControls.
 import { InstrumentSearchGrid } from "./components/InstrumentSearchGrid.js";
 import { InstrumentSelectionTray } from "./components/InstrumentSelectionTray.js";
 import { PageHeader } from "@/ui";
-import type { CompSetSummary } from "./types/index.js";
+import type { CompSetSummary, Instrument } from "./types/index.js";
 
 export function ComparablesManager() {
   const {
-    compSets, activeSetId, isDrawerOpen,
-    selectedInstruments, setActiveSet, closeDrawer, openDrawer,
-    setSelectedInstruments, clearSelection,
-    createCompSet, deleteCompSet, renameCompSet,
-    addToCompSets, removeFromCompSet,
+    compSets,
+    activeSetId,
+    isDrawerOpen,
+    selectedInstruments,
+    setActiveSet,
+    closeDrawer,
+    openDrawer,
+    setSelectedInstruments,
+    clearSelection,
+    createCompSet,
+    deleteCompSet,
+    renameCompSet,
+    addToCompSets,
+    removeFromCompSet,
   } = useComparablesStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,8 +34,13 @@ export function ComparablesManager() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== "Escape") return;
-      if (selectedInstruments.length > 0) { clearSelection(); return; }
-      if (isDrawerOpen) { closeDrawer(); }
+      if (selectedInstruments.length > 0) {
+        clearSelection();
+        return;
+      }
+      if (isDrawerOpen) {
+        closeDrawer();
+      }
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
@@ -44,6 +58,12 @@ export function ComparablesManager() {
     name: c.name,
     instrumentCount: c.instruments.length,
   }));
+
+  function handleDropInstrument(instrument: Instrument) {
+    if (activeSetId) {
+      addToCompSets([instrument.isin], [activeSetId], mockAllInstruments);
+    }
+  }
 
   return (
     <div>
@@ -82,7 +102,9 @@ export function ComparablesManager() {
               selectedInstruments={selectedInstruments}
               availableCompSets={compSetSummaries}
               activeSetId={activeSetId}
-              onAdd={(isins, setIds) => addToCompSets(isins, setIds, mockAllInstruments)}
+              onAdd={(isins, setIds) =>
+                addToCompSets(isins, setIds, mockAllInstruments)
+              }
               onClearSelection={clearSelection}
             />
           </>
@@ -95,6 +117,7 @@ export function ComparablesManager() {
               onRename={renameCompSet}
               onDelete={deleteCompSet}
               onRemoveInstruments={removeFromCompSet}
+              onDropInstrument={handleDropInstrument}
             />
           ) : null
         }
